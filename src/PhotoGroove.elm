@@ -36,12 +36,6 @@ photoDecoder =
         |> optional "title" string "(untitled)"
 
 
-
--- buildPhoto : String -> Int -> String -> Photo
--- buildPhoto url size title =
---     { url = url, size = size, title = title }
-
-
 type Status
     = Loading
     | Loaded (List Photo) String
