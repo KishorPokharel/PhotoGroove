@@ -4,6 +4,7 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
+import Http
 import Random
 
 
@@ -54,9 +55,10 @@ selectUrl url status =
 
 type Msg
     = ClickedPhoto String
-    | GotRandomPhoto Photo
     | ClickedSize ThumbnailSize
     | ClickedSurpriseMe
+    | GotRandomPhoto Photo
+    | GotPhotos (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,9 +66,6 @@ update msg model =
     case msg of
         ClickedPhoto url ->
             ( { model | status = selectUrl url model.status }, Cmd.none )
-
-        GotRandomPhoto photo ->
-            ( { model | status = selectUrl photo.url model.status }, Cmd.none )
 
         ClickedSurpriseMe ->
             case model.status of
@@ -86,6 +85,24 @@ update msg model =
 
         ClickedSize size ->
             ( { model | chosenSize = size }, Cmd.none )
+
+        GotRandomPhoto photo ->
+            ( { model | status = selectUrl photo.url model.status }, Cmd.none )
+
+        GotPhotos (Ok responseStr) ->
+            case String.split "," responseStr of
+                (firstUrl :: _) as urls ->
+                    let
+                        photos =
+                            List.map Photo urls
+                    in
+                    ( { model | status = Loaded photos firstUrl }, Cmd.none )
+
+                [] ->
+                    ( { model | status = Errored "0 photos found" }, Cmd.none )
+
+        GotPhotos (Err _) ->
+            ( { model | status = Errored "Server error!" }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -144,6 +161,14 @@ sizeToString size =
             "large"
 
 
+initialCmd : Cmd Msg
+initialCmd =
+    Http.get
+        { url = "https://elm-in-action.com/photos/list"
+        , expect = Http.expectString GotPhotos
+        }
+
+
 main : Program () Model Msg
 main =
-    Browser.element { init = \flags -> ( initialModel, Cmd.none ), view = view, update = update, subscriptions = \model -> Sub.none }
+    Browser.element { init = \_ -> ( initialModel, initialCmd ), view = view, update = update, subscriptions = \_ -> Sub.none }
