@@ -19,9 +19,18 @@ type alias Photo =
     }
 
 
+type Folder
+    = Folder
+        { name : String
+        , photoUrls : List String
+        , subFolders : List Folder
+        }
+
+
 type alias Model =
     { selectedPhotoUrl : Maybe String
     , photos : Dict String Photo
+    , root : Folder
     }
 
 
@@ -29,6 +38,12 @@ initialModel : Model
 initialModel =
     { selectedPhotoUrl = Nothing
     , photos = Dict.empty
+    , root =
+        Folder
+            { name = "Loading..."
+            , photoUrls = []
+            , subFolders = []
+            }
     }
 
 
@@ -77,6 +92,18 @@ viewRelatedPhoto url =
         []
 
 
+viewFolder : Folder -> Html Msg
+viewFolder (Folder folder) =
+    let
+        subfolders =
+            List.map viewFolder folder.subFolders
+    in
+    div [ class "folder" ]
+        [ label [] [ text folder.name ]
+        , div [ class "subfolders" ] subfolders
+        ]
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -94,7 +121,11 @@ view model =
                     text ""
     in
     div [ class "content" ]
-        [ div [ class "selected-photo" ] [ selectedPhoto ]
+        [ div [ class "folders" ]
+            [ h1 [] [ text "Folders" ]
+            , viewFolder model.root
+            ]
+        , div [ class "selected-photo" ] [ selectedPhoto ]
         ]
 
 
@@ -126,6 +157,45 @@ modelDecoder =
                     }
                   )
                 ]
+        , root =
+            Folder
+                { name = "Photos"
+                , photoUrls = []
+                , subFolders =
+                    [ Folder
+                        { name = "2016"
+                        , photoUrls = [ "trevi", "coli" ]
+                        , subFolders =
+                            [ Folder
+                                { name = "outdoors"
+                                , photoUrls = []
+                                , subFolders = []
+                                }
+                            , Folder
+                                { name = "indoors"
+                                , photoUrls = [ "fresco" ]
+                                , subFolders = []
+                                }
+                            ]
+                        }
+                    , Folder
+                        { name = "2017"
+                        , photoUrls = []
+                        , subFolders =
+                            [ Folder
+                                { name = "outdoors"
+                                , photoUrls = []
+                                , subFolders = []
+                                }
+                            , Folder
+                                { name = "indoors"
+                                , photoUrls = []
+                                , subFolders = []
+                                }
+                            ]
+                        }
+                    ]
+                }
         }
 
 
