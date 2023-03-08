@@ -1,4 +1,4 @@
-port module PhotoGroove exposing (main)
+port module PhotoGallery exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser
 import Html exposing (..)
